@@ -9,7 +9,6 @@
 <meta name="ClaudeBot" content="noindex, nofollow">
 <meta name="PerplexityBot" content="noindex, nofollow">
 
-
 <script>
   // 禁用右鍵
   document.addEventListener('contextmenu', function(e) {
@@ -31,11 +30,13 @@
 
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Foodie 大冒險</title>
+    <title>美食戰隊！香港地圖 - Food Hunter</title>
     <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=DotGothic16&family=Press+Start+2P&family=Noto+Sans+TC:wght@500;700;900&display=swap" rel="stylesheet">
+    <!-- Leaflet Routing Machine CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.css" />
+    <!-- Google Fonts: Retro Anime & Japanese Style Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Kosugi+Maru&family=Yuji+Syuku&family=Mochiy+Pop+One&family=Noto+Sans+TC:wght@500;700;900&display=swap" rel="stylesheet">
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -43,195 +44,304 @@
             theme: {
                 extend: {
                     fontFamily: {
-                        pixel: ['"Press Start 2P"', 'monospace'],
-                        gothic: ['"DotGothic16"', 'sans-serif'],
+                        anime: ['"Mochiy Pop One"', '"Kosugi Maru"', 'sans-serif'],
+                        manga: ['"Yuji Syuku"', 'serif'],
                         sans: ['"Noto Sans TC"', 'sans-serif']
+                    },
+                    colors: {
+                        'toei-pink': '#ff79c6',
+                        'toei-blue': '#38bdf8',
+                        'toei-yellow': '#facc15',
+                        'toei-red': '#f43f5e',
+                        'toei-dark': '#1e1b4b'
                     }
                 }
             }
         }
     </script>
     <style>
-        .crt::after {
-            content: " ";
-            display: block;
-            position: absolute;
-            top: 0; left: 0; bottom: 0; right: 0;
-            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.15) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03));
-            z-index: 999;
-            background-size: 100% 3px, 5px 100%;
-            pointer-events: none;
+        /* 80s-90s Cel Anime Canvas Overlay Effects */
+        .cel-shading {
+            box-shadow: 0 0 0 4px #000, 4px 4px 0 4px #1e1b4b, 8px 8px 18px rgba(0,0,0,0.35);
         }
-        .pixel-box-32 {
-            border: 4px solid #3b0764;
-            box-shadow: inset -2px -2px 0px #1e1b4b, inset 2px 2px 0px #c084fc, 4px 4px 0px #090514;
-            background: #1e1b4b;
+        .anime-panel {
+            background: linear-gradient(135deg, #ffffff 0%, #fff5f8 100%);
+            border: 3.5px solid #000;
+            box-shadow: 4px 4px 0px #000;
+            border-radius: 12px;
         }
-        .pixel-btn-32 {
-            border: 3px solid #2e1065;
-            box-shadow: inset -2px -2px 0px #4c1d95, inset 2px 2px 0px #ddd6fe, 3px 3px 0px #090514;
-            transition: all 0.1s ease;
+
+        /* Vintage Anime Buttons with Halftone/Speedlines */
+        .anime-btn {
+            border: 3px solid #000;
+            box-shadow: 3px 3px 0px #000;
+            font-weight: 900;
+            transition: transform 0.1s ease, box-shadow 0.1s ease, filter 0.2s ease;
+            position: relative;
+            overflow: hidden;
+            border-radius: 8px;
         }
-        .pixel-btn-32:hover {
-            transform: translate(-1px, -1px);
-            filter: brightness(1.15);
+        .anime-btn:hover {
+            transform: translate(-2px, -2px);
+            box-shadow: 5px 5px 0px #000;
+            filter: brightness(1.08);
         }
-        .pixel-btn-32:active {
+        .anime-btn:active {
             transform: translate(2px, 2px);
-            box-shadow: 1px 1px 0px #090514;
+            box-shadow: 1px 1px 0px #000;
         }
+
+        /* Speedlines / Action Rays Background Banner */
+        .speedlines {
+            background: repeating-conic-gradient(
+                from 0deg,
+                rgba(255, 255, 255, 0.25) 0deg 10deg,
+                rgba(255, 255, 255, 0) 10deg 20deg
+            );
+        }
+        
+        /* Anime Aura Animations for Hero Mascot */
+        @keyframes auraGlow {
+            0% { transform: scale(1); filter: drop-shadow(0 0 4px #facc15) drop-shadow(0 0 10px #f43f5e); }
+            50% { transform: scale(1.12) rotate(3deg); filter: drop-shadow(0 0 12px #38bdf8) drop-shadow(0 0 20px #fb7185); }
+            100% { transform: scale(1); filter: drop-shadow(0 0 4px #facc15) drop-shadow(0 0 10px #f43f5e); }
+        }
+        .hero-aura {
+            animation: auraGlow 1.8s infinite ease-in-out;
+        }
+
+        @keyframes starburstPulse {
+            0% { transform: scale(1) rotate(0deg); }
+            50% { transform: scale(1.08) rotate(5deg); }
+            100% { transform: scale(1) rotate(0deg); }
+        }
+        .starburst {
+            animation: starburstPulse 3s infinite ease-in-out;
+        }
+
+        /* Leaflet Popup Customization */
         .leaflet-popup-content-wrapper {
-            background: #2e1065 !important;
-            color: #fef08a !important;
-            border: 3px solid #f59e0b !important;
-            box-shadow: 4px 4px 0px #090514 !important;
-            border-radius: 0px !important;
+            background: #ffffff !important;
+            color: #000 !important;
+            border: 3.5px solid #000 !important;
+            box-shadow: 5px 5px 0px #000 !important;
+            border-radius: 12px !important;
             font-family: 'Noto Sans TC', sans-serif;
         }
         .leaflet-popup-tip {
-            background: #f59e0b !important;
+            background: #000 !important;
         }
-        .dark-map-filter .leaflet-tile-pane {
-            filter: invert(100%) hue-rotate(200deg) brightness(85%) contrast(125%);
+        
+        /* Night Mode Filter for Anime Cel Map */
+        .anime-night-filter .leaflet-tile-pane {
+            filter: invert(90%) hue-rotate(220deg) brightness(85%) contrast(140%);
         }
-        @keyframes pixelPulse {
-            0% { transform: scale(1); box-shadow: 0 0 0px #f59e0b; }
-            50% { transform: scale(1.1); box-shadow: 0 0 12px #f59e0b; }
-            100% { transform: scale(1); box-shadow: 0 0 0px #f59e0b; }
+
+        /* Custom Routing Line Animation Glow */
+        @keyframes lineGlow {
+            0% { stroke: #f43f5e; }
+            50% { stroke: #38bdf8; }
+            100% { stroke: #f43f5e; }
         }
-        .marker-pulse {
-            animation: pixelPulse 2s infinite ease-in-out;
+
+        /* Hide default Leaflet Routing Machine control panel box */
+        .leaflet-routing-container {
+            display: none !important;
         }
-        ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-track { background: #1e1b4b; border: 2px solid #3b0764; }
-        ::-webkit-scrollbar-thumb { background: #f59e0b; border: 2px solid #3b0764; }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 10px; }
+        ::-webkit-scrollbar-track { background: #ffe4e6; border-left: 3px solid #000; }
+        ::-webkit-scrollbar-thumb { background: #f43f5e; border: 2px solid #000; border-radius: 6px; }
     </style>
 </head>
-<body class="bg-slate-950 text-amber-200 font-gothic h-screen flex flex-col overflow-hidden select-none relative crt">
+<body id="bodyBg" class="bg-gradient-to-br from-sky-200 via-pink-100 to-amber-100 text-slate-900 font-anime h-screen flex flex-col overflow-hidden select-none transition-colors duration-500">
 
-    <!-- 頂部列 -->
-    <header class="bg-gradient-to-r from-purple-950 via-slate-900 to-indigo-950 text-amber-300 px-4 py-3 border-b-4 border-amber-500 flex flex-wrap items-center justify-between z-20 shadow-2xl">
-        <div class="flex items-center space-x-3">
-            <div class="w-9 h-9 bg-gradient-to-br from-amber-400 to-orange-500 pixel-box-32 flex items-center justify-center text-slate-950 font-pixel text-sm">⚔️</div>
+    <!-- 📺 經典東映動畫劇集標題 Header Bar -->
+    <header class="bg-gradient-to-r from-sky-400 via-rose-400 to-amber-300 px-4 py-2.5 border-b-4 border-black flex flex-wrap items-center justify-between z-20 shadow-xl relative overflow-hidden">
+        <div class="absolute inset-0 speedlines opacity-30 pointer-events-none"></div>
+        
+        <div class="flex items-center space-x-3 z-10">
+            <!-- 美食戰隊星星 Badge -->
+            <div class="w-11 h-11 bg-amber-300 border-3 border-black rounded-full flex items-center justify-center font-black text-2xl shadow-[2px_2px_0px_#000] starburst">
+                🌟
+            </div>
             <div>
-                <h1 class="font-pixel text-xs md:text-sm tracking-wider text-amber-400 drop-shadow-[2px_2px_0_#000]">PIXEL FOODIE 大冒險</h1>
-                <p class="text-[10px] text-purple-300 font-sans">香港美食雷達 (茶記、CAFE、甜品、小店)</p>
+                <div class="flex items-center space-x-2">
+                    <span class="bg-black text-amber-300 text-[10px] font-black px-2 py-0.5 rounded-full border border-amber-300">第 1 話・香港美食雷達</span>
+                    <span class="bg-pink-600 text-white text-[10px] font-black px-2 py-0.5 rounded-full border border-black shadow-[1px_1px_0px_#000]">ANIMATION</span>
+                </div>
+                <h1 class="font-anime text-sm sm:text-base md:text-lg tracking-wider text-white drop-shadow-[2px_2px_0_#000] mt-0.5">
+                    美食戰隊 GOURMET RANGER
+                </h1>
             </div>
         </div>
-        <div class="flex items-center space-x-2 mt-2 sm:mt-0">
-            <button onclick="toggleAddMode()" id="addModeBtn" class="pixel-btn-32 bg-amber-500 text-slate-950 font-bold px-3 py-1.5 text-xs font-pixel rounded-none">
-                ➕ 點擊地圖加餐廳
+
+        <!-- 頂部按鈕選項 -->
+        <div class="flex items-center space-x-2 mt-2 sm:mt-0 z-10">
+            <button onclick="toggleAddMode()" id="addModeBtn" class="anime-btn bg-amber-300 text-black px-3 py-1.5 text-xs font-black flex items-center space-x-1">
+                <span>✨</span> <span id="addBtnText">點擊地圖加私房美食</span>
             </button>
-            <button onclick="toggleMapTheme()" id="themeBtn" class="pixel-btn-32 bg-purple-700 text-white px-3 py-1.5 text-xs font-pixel rounded-none">
-                🌌 Dark
+            <button onclick="toggleMapTheme()" id="themeBtn" class="anime-btn bg-purple-600 text-white px-3 py-1.5 text-xs font-black">
+                🌙 夜視
             </button>
-            <button onclick="triggerGPS()" id="gpsStatusBtn" class="pixel-btn-32 bg-emerald-600 text-white px-3 py-1.5 text-xs font-pixel rounded-none flex items-center space-x-1">
-                <span>📍</span> <span id="gpsText">GPS 100M 鎖定</span>
+            <button onclick="triggerGPS()" id="gpsStatusBtn" class="anime-btn bg-emerald-400 text-black px-3 py-1.5 text-xs font-black flex items-center space-x-1">
+                <span>📍</span> <span id="gpsText">GPS 定位</span>
             </button>
         </div>
     </header>
 
-    <!-- 主畫面 -->
+    <!-- 主畫面兩欄區塊 -->
     <div class="flex-1 flex flex-col lg:flex-row relative overflow-hidden">
         
-        <!-- 地圖區 -->
-        <div class="flex-1 h-[50vh] lg:h-full relative flex flex-col">
+        <!-- 左側：動畫地圖區 -->
+        <div class="flex-1 h-[55vh] lg:h-full relative flex flex-col">
+            <!-- 視角功能控制條 -->
             <div class="absolute top-4 left-1/2 transform -translate-x-1/2 z-[1000] flex space-x-2">
-                <button onclick="loadRealHKRestaurants()" class="pixel-btn-32 bg-gradient-to-r from-amber-500 to-orange-500 text-slate-950 px-4 py-2 text-xs font-pixel font-bold flex items-center space-x-1 shadow-2xl">
-                    <span>🌟</span> <span>100M 美食包</span>
-                </button>
-                <button onclick="searchRestaurantsInBounds()" class="pixel-btn-32 bg-slate-800 hover:bg-slate-700 text-amber-300 px-4 py-2 text-xs font-pixel font-bold flex items-center space-x-1 shadow-2xl">
-                    <span>🔍</span> <span>Scan 掃描</span>
+                <button onclick="searchRestaurantsInBounds()" class="anime-btn bg-gradient-to-r from-amber-300 via-rose-300 to-pink-400 text-black px-4 py-2 text-xs font-black flex items-center space-x-1 shadow-2xl">
+                    <span>⚡</span> <span>雷達範圍掃瞄</span>
                 </button>
             </div>
 
-            <div id="map" class="flex-1 w-full h-full bg-slate-900 z-10 dark-map-filter"></div>
+            <!-- Leaflet 地圖容器 -->
+            <div id="map" class="flex-1 w-full h-full bg-sky-100 z-10"></div>
 
-            <!-- RPG 對話框 -->
+            <!-- 🚶‍♂️ 即時導航 overlay 懸浮面板 -->
+            <div id="navPanel" class="hidden absolute top-16 left-4 right-4 sm:left-6 sm:right-auto sm:w-80 z-[1000] anime-panel bg-white p-4 border-4 border-black shadow-2xl">
+                <div class="flex items-center justify-between border-b-2 border-black pb-2 mb-2">
+                    <div class="flex items-center space-x-2">
+                        <span class="text-xl animate-bounce">🏃‍♂️</span>
+                        <h3 class="font-anime text-sm text-rose-600 font-black" id="navTargetName">戰隊出擊導航</h3>
+                    </div>
+                    <button onclick="stopNavigation()" class="anime-btn bg-rose-500 text-white px-2 py-0.5 text-xs font-black">
+                        ❌ 結束導航
+                    </button>
+                </div>
+                
+                <div class="flex items-center justify-around bg-amber-100 p-2 rounded-lg border-2 border-black mb-3 text-center">
+                    <div>
+                        <p class="text-[10px] text-slate-600 font-bold">預估距離</p>
+                        <p id="navDistance" class="font-anime text-sm text-black font-black">0 公尺</p>
+                    </div>
+                    <div class="border-r-2 border-black h-6"></div>
+                    <div>
+                        <p class="text-[10px] text-slate-600 font-bold">時間</p>
+                        <p id="navTime" class="font-anime text-sm text-rose-600 font-black">0 分鐘</p>
+                    </div>
+                </div>
+
+                <!-- 展開細節與指引 -->
+                <details class="text-xs font-sans">
+                    <summary class="cursor-pointer font-bold text-slate-800 bg-slate-100 p-1.5 rounded border border-black flex justify-between items-center">
+                        <span>🗺️ 轉彎指引路線明細</span>
+                        <span class="text-[10px] text-rose-600">展開</span>
+                    </summary>
+                    <div id="navInstructions" class="mt-2 max-h-36 overflow-y-auto space-y-1 pr-1 text-[11px] text-slate-700">
+                        <!-- 指引路線明細列表 -->
+                    </div>
+                </details>
+            </div>
+
+            <!-- 漫畫對話框 (長老/隊長 Anime Mentor) -->
             <div class="absolute bottom-4 left-4 right-4 z-[1000] pointer-events-none">
-                <div class="pixel-box-32 bg-purple-950/90 text-amber-200 p-3 flex items-start space-x-3 pointer-events-auto backdrop-blur-md border-amber-500/50">
-                    <div class="w-11 h-11 bg-gradient-to-tr from-amber-500 to-yellow-300 pixel-box-32 flex-shrink-0 flex items-center justify-center text-2xl animate-bounce">
+                <div class="anime-panel p-3.5 flex items-start space-x-3 pointer-events-auto shadow-2xl border-2 border-black max-w-2xl mx-auto">
+                    <!-- 隊長頭像 -->
+                    <div class="w-12 h-12 bg-gradient-to-tr from-amber-400 to-rose-400 border-3 border-black rounded-full flex-shrink-0 flex items-center justify-center text-2xl hero-aura shadow-[2px_2px_0px_#000]">
                         🧙‍♂️
                     </div>
+                    <!-- 對話文字 -->
                     <div class="flex-1">
-                        <div class="font-pixel text-[10px] text-amber-400 mb-1 flex items-center space-x-2">
-                            <span>大冒險導航長老</span>
-                            <span class="text-[9px] bg-amber-500/20 px-1.5 py-0.5 border border-amber-400/50">出發啦!</span>
+                        <div class="font-manga font-bold text-xs text-rose-600 mb-0.5 flex items-center space-x-2">
+                            <span>「美食導航長老」</span>
                         </div>
-                        <p id="dialogueText" class="text-xs sm:text-sm text-purple-100 font-sans">點擊掃描即可極速取得視野內的四大分類！</p>
+                        <p id="dialogueText" class="text-xs sm:text-sm text-slate-900 font-sans font-bold leading-relaxed">
+                            「隊員！按下餐廳卡片上的【🚀 導航】，系統會直接在地圖規劃出路徑！」
+                        </p>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- 右側背包區 -->
-        <div class="w-full lg:w-[420px] h-[50vh] lg:h-full bg-slate-900 border-t-4 lg:border-t-0 lg:border-l-4 border-purple-950 flex flex-col z-20 shadow-2xl">
-            <div class="bg-gradient-to-r from-purple-950 to-slate-900 text-amber-300 px-4 py-3 border-b-2 border-purple-900 flex items-center justify-between">
+        <!-- 右側：美食戰隊寶物庫 (Inventory) -->
+        <div id="inventoryPanel" class="w-full lg:w-[420px] h-[45vh] lg:h-full bg-gradient-to-b from-pink-50 to-sky-50 border-t-4 lg:border-t-0 lg:border-l-4 border-black flex flex-col z-20 shadow-2xl">
+            
+            <!-- 背包標題列 -->
+            <div class="bg-gradient-to-r from-rose-400 via-pink-400 to-purple-400 text-black px-4 py-3 border-b-3 border-black flex items-center justify-between shadow-md">
                 <div class="flex items-center space-x-2">
                     <span class="text-xl">🎒</span>
-                    <h2 class="font-pixel text-xs tracking-wide">美食冒險包</h2>
+                    <h2 class="font-anime text-xs sm:text-sm tracking-wide text-white drop-shadow-[1.5px_1.5px_0_#000]">美食戰隊寶物庫</h2>
                 </div>
-                <span id="inventoryCount" class="bg-amber-400 text-slate-950 text-xs px-2 py-0.5 font-pixel font-bold">0 筆</span>
+                <span id="inventoryCount" class="bg-amber-300 text-black border-2 border-black text-xs px-2.5 py-0.5 font-black rounded-full shadow-[1px_1px_0px_#000]">0 筆</span>
             </div>
 
-            <!-- 分類選單 -->
-            <div class="bg-slate-950 p-2 border-b-2 border-purple-950 flex space-x-1 overflow-x-auto text-xs font-pixel">
-                <button onclick="filterCategory('all')" class="cat-btn pixel-btn-32 bg-amber-400 text-slate-950 px-3 py-1 whitespace-nowrap font-bold">全部</button>
-                <button onclick="filterCategory('cha_chaan_teng')" class="cat-btn pixel-btn-32 bg-purple-900 text-purple-200 px-3 py-1 whitespace-nowrap">茶記</button>
-                <button onclick="filterCategory('cafe')" class="cat-btn pixel-btn-32 bg-purple-900 text-purple-200 px-3 py-1 whitespace-nowrap">CAFE</button>
-                <button onclick="filterCategory('dessert')" class="cat-btn pixel-btn-32 bg-purple-900 text-purple-200 px-3 py-1 whitespace-nowrap">甜品</button>
-                <button onclick="filterCategory('small_shop')" class="cat-btn pixel-btn-32 bg-purple-900 text-purple-200 px-3 py-1 whitespace-nowrap">小店</button>
-                <button onclick="filterCategory('favorite')" class="cat-btn pixel-btn-32 bg-rose-600 text-white px-3 py-1 whitespace-nowrap">❤️ 寶物庫</button>
+            <!-- 分類頁籤 (User Defined Categories: 未分類 / 食過 / 想去 / 最愛 / 全部) -->
+            <div class="bg-white p-2 border-b-3 border-black flex space-x-1.5 overflow-x-auto text-xs font-anime">
+                <button onclick="filterCategory('uncategorized')" class="cat-btn anime-btn bg-amber-300 text-black px-3 py-1.5 whitespace-nowrap font-black">❓ 未分類</button>
+                <button onclick="filterCategory('eaten')" class="cat-btn anime-btn bg-rose-100 text-rose-800 px-3 py-1.5 whitespace-nowrap">😋 食過</button>
+                <button onclick="filterCategory('wishlist')" class="cat-btn anime-btn bg-rose-100 text-rose-800 px-3 py-1.5 whitespace-nowrap">📌 想去</button>
+                <button onclick="filterCategory('favorite')" class="cat-btn anime-btn bg-rose-100 text-rose-800 px-3 py-1.5 whitespace-nowrap">💖 最愛</button>
+                <button onclick="filterCategory('all')" class="cat-btn anime-btn bg-rose-100 text-rose-800 px-3 py-1.5 whitespace-nowrap">🌐 全部</button>
             </div>
 
-            <div id="restaurantList" class="flex-1 overflow-y-auto p-3 space-y-3 bg-purple-950/20">
-                <div class="text-center py-10 text-purple-300 font-sans text-xs">
-                    <p class="text-2xl mb-2">💎</p>
-                    載入中...
+            <!-- 卡片列表區 -->
+            <div id="restaurantList" class="flex-1 overflow-y-auto p-3 space-y-3 bg-pink-50/50">
+                <div class="text-center py-10 text-slate-500 font-sans text-xs font-bold">
+                    <p class="text-3xl mb-2">✨</p>
+                    寶物庫目前空的～快點擊【雷達範圍掃瞄】尋找附近的美食！
                 </div>
             </div>
         </div>
 
     </div>
 
-    <!-- 自訂餐廳 Modal 彈窗 -->
-    <div id="addModal" class="hidden fixed inset-0 bg-slate-950/80 z-[2000] flex items-center justify-center p-4 backdrop-blur-sm">
-        <div class="pixel-box-32 bg-purple-950 w-full max-w-md p-5 border-amber-500">
-            <h3 class="font-pixel text-amber-400 text-sm mb-4">✍️ 新增私房美食寶箱</h3>
+    <!-- 自訂私房美食彈窗 Modal -->
+    <div id="addModal" class="hidden fixed inset-0 bg-slate-900/70 z-[2000] flex items-center justify-center p-4 backdrop-blur-xs">
+        <div class="anime-panel bg-white w-full max-w-md p-6 border-4 border-black">
+            <div class="flex items-center justify-between mb-4 border-b-2 border-black pb-2">
+                <h3 class="font-anime text-rose-600 text-sm flex items-center gap-2">
+                    <span>✨</span> <span>記錄美食據點</span>
+                </h3>
+                <span class="text-xs bg-amber-300 px-2 py-0.5 border border-black font-bold">NEW ITEM</span>
+            </div>
+            
             <div class="space-y-3 font-sans text-xs">
                 <div>
-                    <label class="block text-purple-300 mb-1">餐廳名稱：</label>
-                    <input type="text" id="custName" placeholder="例如：阿誠茶檔" class="w-full bg-slate-900 border border-purple-700 p-2 text-white font-bold focus:border-amber-400 focus:outline-none">
+                    <label class="block font-bold text-slate-800 mb-1">餐廳名稱：</label>
+                    <input type="text" id="custName" placeholder="例如：阿誠冰室" class="w-full bg-slate-50 border-2 border-black p-2 text-black font-bold focus:outline-none focus:bg-amber-50 rounded-lg">
                 </div>
                 <div class="grid grid-cols-2 gap-2">
                     <div>
-                        <label class="block text-purple-300 mb-1">分類：</label>
-                        <select id="custType" class="w-full bg-slate-900 border border-purple-700 p-2 text-amber-300 focus:outline-none font-bold">
-                            <option value="cha_chaan_teng">茶記</option>
-                            <option value="cafe">CAFE</option>
-                            <option value="dessert">甜品</option>
-                            <option value="small_shop">小店</option>
+                        <label class="block font-bold text-slate-800 mb-1">歸類標籤：</label>
+                        <select id="custStatus" class="w-full bg-slate-50 border-2 border-black p-2 text-rose-700 font-bold focus:outline-none rounded-lg">
+                            <option value="uncategorized">❓ 未分類</option>
+                            <option value="wishlist">📌 想去</option>
+                            <option value="eaten">😋 食過</option>
+                            <option value="favorite">💖 最愛</option>
                         </select>
                     </div>
                     <div>
-                        <label class="block text-purple-300 mb-1">評分 (1.0-5.0)：</label>
-                        <input type="number" id="custRating" step="0.1" value="4.8" max="5" min="1" class="w-full bg-slate-900 border border-purple-700 p-2 text-white font-bold">
+                        <label class="block font-bold text-slate-800 mb-1">戰鬥評分 (1.0-5.0)：</label>
+                        <input type="number" id="custRating" step="0.1" value="3" max="5" min="1" class="w-full bg-slate-50 border-2 border-black p-2 text-black font-bold rounded-lg">
                     </div>
                 </div>
                 <div>
-                    <label class="block text-purple-300 mb-1">地址/簡介：</label>
-                    <input type="text" id="custAddress" placeholder="例如：旺角街角小店" class="w-full bg-slate-900 border border-purple-700 p-2 text-white">
+                    <label class="block font-bold text-slate-800 mb-1">地址/秘密簡介：</label>
+                    <input type="text" id="custAddress" placeholder="例如：巷仔內經典小店" class="w-full bg-slate-50 border-2 border-black p-2 text-black rounded-lg">
                 </div>
             </div>
-            <div class="mt-5 flex justify-end space-x-2">
-                <button onclick="closeAddModal()" class="pixel-btn-32 bg-slate-800 text-purple-300 px-4 py-2 font-pixel text-xs">取消</button>
-                <button onclick="saveCustomRestaurant()" class="pixel-btn-32 bg-amber-500 text-slate-950 font-bold px-4 py-2 font-pixel text-xs">確定新增</button>
+            
+            <div class="mt-6 flex justify-end space-x-2">
+                <button onclick="closeAddModal()" class="anime-btn bg-slate-200 text-slate-800 px-4 py-2 font-anime text-xs">取消</button>
+                <button onclick="saveCustomRestaurant()" class="anime-btn bg-rose-500 text-white font-black px-4 py-2 font-anime text-xs">儲存據點</button>
             </div>
         </div>
     </div>
 
     <!-- Leaflet JS -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <!-- Leaflet Routing Machine JS -->
+    <script src="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.js"></script>
+    
     <script>
         const LOCATIONIQ_TOKEN = 'pk.fbe6fd6cddba735877418e495a8a3356';
 
@@ -239,31 +349,22 @@
         let userMarker = null;
         let userCircle = null;
         let restaurantMarkers = [];
+        let markerMap = {}; // 對照表：用 restaurant.id 快速尋找對應的 Leaflet Marker
         let allRestaurants = [];
-        let customRestaurants = [];
         let currentFilter = 'all';
-        let userLat = 22.3046;
-        let userLng = 114.1706;
-        let isDarkMode = true;
+        let userLat = 22.3048;
+        let userLng = 114.1702;
+        let isDarkMode = false;
         let isAddMode = false;
         let selectedLat = null;
         let selectedLng = null;
-
-        const hkFamousRestaurants = [
-            { id: 1, name: "澳洲牛奶公司 (Australia Dairy Company)", lat: 22.3046, lon: 114.1706, type: "cha_chaan_teng", cuisine: "經典茶記", address: "佐敦白加士街47號地下", rating: "4.5" },
-            { id: 2, name: "蘭芳園 (Lan Fong Yuen)", lat: 22.2826, lon: 114.1541, type: "cha_chaan_teng", cuisine: "絲襪奶茶", address: "中環結志街2號", rating: "4" },
-            { id: 3, name: "科記咖啡餐廳 (For Kee)", lat: 22.2852, lon: 114.1482, type: "cha_chaan_teng", cuisine: "金牌豬排", address: "上環荷李活道200號地下", rating: "4" },
-            { id: 4, name: "佳佳甜品 (Kai Kai Dessert)", lat: 22.3065, lon: 114.1710, type: "dessert", cuisine: "米芝蓮甜品", address: "佐敦寧波街29號地舖", rating: "4.5" },
-            { id: 5, name: "日昇小食", lat: 22.3194, lon: 114.1873, type: "small_shop", cuisine: "著名韭菜餅小店", address: "九龍土瓜灣馬頭圍道428 號C 舖地下", rating: "4.5" },
-            { id: 6, name: "By The O Studio", lat: 22.3179, lon: 114.1903, type: "cafe", cuisine: "打卡Cafe", address: "土瓜灣長寧街58號定安大廈地下45號舖", rating: "3.5" },
-            { id: 7, name: "莆源冰室 (Po Yuen Cafe)", lat: 22.334588, lon: 114.194909, type: "cafe", cuisine: "醫院飯", address: "新蒲崗仁愛街26號", rating: "3" }
-        ];
+        let routingControl = null; // 導航控制物件
 
         function initMap() {
             try {
                 if (map) return;
 
-                map = L.map('map', { zoomControl: false }).setView([userLat, userLng], 19);
+                map = L.map('map', { zoomControl: false }).setView([userLat, userLng], 18);
 
                 const locationIQLayer = L.tileLayer(`https://{s}-tiles.locationiq.com/v3/streets/r/{z}/{x}/{y}.png?key=${LOCATIONIQ_TOKEN}`, {
                     maxZoom: 19,
@@ -284,6 +385,7 @@
 
                 L.control.zoom({ position: 'bottomright' }).addTo(map);
 
+                // 手動點擊地圖新增私房美食
                 map.on('click', function(e) {
                     if (isAddMode) {
                         selectedLat = e.latlng.lat;
@@ -292,14 +394,12 @@
                     }
                 });
 
-                loadSavedCustomRestaurants();
+                loadSavedRestaurants();
                 updateUserMarkerAndCircle();
-                loadRealHKRestaurants();
+                renderAllMarkersAndInventory();
                 triggerGPS();
 
-                setTimeout(() => {
-                    map.invalidateSize();
-                }, 200);
+                setTimeout(() => { map.invalidateSize(); }, 200);
 
             } catch (e) {
                 console.error("地圖初始化錯誤: ", e);
@@ -309,13 +409,15 @@
         function toggleAddMode() {
             isAddMode = !isAddMode;
             const btn = document.getElementById('addModeBtn');
+            const text = document.getElementById('addBtnText');
+
             if (isAddMode) {
-                btn.className = 'pixel-btn-32 bg-rose-600 text-white font-bold px-3 py-1.5 text-xs font-pixel rounded-none animate-pulse';
-                btn.innerText = '🎯 請點擊地圖位置';
-                setDialogue("【新增模式】請直接在地圖上點擊你想要新增餐廳的位置！");
+                btn.className = 'anime-btn bg-rose-500 text-white font-black px-3 py-1.5 text-xs animate-bounce';
+                text.innerText = '🎯 請點擊地圖標記位置';
+                setDialogue("【新增模式】請直接在地圖上點擊你想記錄的美食位置！");
             } else {
-                btn.className = 'pixel-btn-32 bg-amber-500 text-slate-950 font-bold px-3 py-1.5 text-xs font-pixel rounded-none';
-                btn.innerText = '➕ 點擊地圖加餐廳';
+                btn.className = 'anime-btn bg-amber-300 text-black font-black px-3 py-1.5 text-xs';
+                text.innerText = '點擊地圖加私房美食';
                 setDialogue("已退出新增模式。");
             }
         }
@@ -324,73 +426,92 @@
             document.getElementById('addModal').classList.add('hidden');
         }
 
+        // 保存新增餐廳至 LocalStorage
         function saveCustomRestaurant() {
-            const name = document.getElementById('custName').value.trim() || "神秘隱藏美食";
-            const type = document.getElementById('custType').value;
-            const rating = document.getElementById('custRating').value || "3.5";
-            const address = document.getElementById('custAddress').value.trim() || "私人秘密據點";
+            const name = document.getElementById('custName').value.trim() || "神秘私房美食";
+            const status = document.getElementById('custStatus').value;
+            const rating = document.getElementById('custRating').value || "3";
+            const address = document.getElementById('custAddress').value.trim() || "私房秘密據點";
 
             const newRestaurant = {
-                id: 'cust_' + Date.now(),
+                id: 'toei_spot_' + Date.now(),
                 name: name,
                 lat: selectedLat,
                 lon: selectedLng,
-                type: type,
-                cuisine: "自訂私房菜",
+                status: status, // 'uncategorized', 'eaten', 'wishlist', 'favorite'
                 address: address,
-                rating: rating,
-                isCustom: true,
-                favorited: true
+                rating: rating
             };
 
-            customRestaurants.push(newRestaurant);
-            localStorage.setItem('my_custom_restaurants_v5', JSON.stringify(customRestaurants));
+            allRestaurants.push(newRestaurant);
+            persistRestaurants();
 
             closeAddModal();
             toggleAddMode();
-            loadRealHKRestaurants();
-            setDialogue(`成功新增私房美食寶箱：「${name}」！`);
+            renderAllMarkersAndInventory();
+            setDialogue(`成功將據點「${name}」收入戰隊庫存！`);
         }
 
-        function loadSavedCustomRestaurants() {
-            const saved = localStorage.getItem('my_custom_restaurants_v5');
+        function loadSavedRestaurants() {
+            const saved = localStorage.getItem('toei_user_restaurants');
             if (saved) {
                 try {
-                    customRestaurants = JSON.parse(saved);
-                } catch (e) { customRestaurants = []; }
+                    allRestaurants = JSON.parse(saved);
+                } catch (e) { allRestaurants = []; }
+            } else {
+                allRestaurants = [];
             }
         }
 
-        function deleteCustomRestaurant(id) {
-            customRestaurants = customRestaurants.filter(r => r.id !== id);
-            localStorage.setItem('my_custom_restaurants_v5', JSON.stringify(customRestaurants));
-            loadRealHKRestaurants();
-            setDialogue("已成功移除該自訂餐廳據點。");
+        function persistRestaurants() {
+            localStorage.setItem('toei_user_restaurants', JSON.stringify(allRestaurants));
+        }
+
+        function deleteRestaurant(id) {
+            allRestaurants = allRestaurants.filter(r => r.id !== id);
+            persistRestaurants();
+            renderAllMarkersAndInventory();
+            setDialogue("已將該據點移出寶物庫。");
+        }
+
+        function updateRestaurantStatus(id, newStatus) {
+            const item = allRestaurants.find(r => r.id === id);
+            if (item) {
+                item.status = newStatus;
+                persistRestaurants();
+                renderAllMarkersAndInventory();
+            }
         }
 
         function toggleMapTheme() {
             isDarkMode = !isDarkMode;
             const mapContainer = document.getElementById('map');
             const btn = document.getElementById('themeBtn');
+            const body = document.getElementById('bodyBg');
 
             if (isDarkMode) {
-                mapContainer.classList.add('dark-map-filter');
-                btn.innerText = '🌌 Dark';
-                btn.className = 'pixel-btn-32 bg-purple-700 text-white px-3 py-1.5 text-xs font-pixel rounded-none';
+                mapContainer.classList.add('anime-night-filter');
+                btn.innerText = '☀️ 日間';
+                btn.className = 'anime-btn bg-amber-300 text-black px-3 py-1.5 text-xs font-black';
+                body.className = "bg-gradient-to-br from-indigo-950 via-slate-900 to-purple-950 text-white font-anime h-screen flex flex-col overflow-hidden select-none transition-colors duration-500";
+                setDialogue("已切換為【夜視模式】！");
             } else {
-                mapContainer.classList.remove('dark-map-filter');
-                btn.innerText = '☀️ Light';
-                btn.className = 'pixel-btn-32 bg-amber-500 text-slate-950 px-3 py-1.5 text-xs font-pixel rounded-none';
+                mapContainer.classList.remove('anime-night-filter');
+                btn.innerText = '🌙 夜視';
+                btn.className = 'anime-btn bg-purple-600 text-white px-3 py-1.5 text-xs font-black';
+                body.className = "bg-gradient-to-br from-sky-200 via-pink-100 to-amber-100 text-slate-900 font-anime h-screen flex flex-col overflow-hidden select-none transition-colors duration-500";
+                setDialogue("已切換為【日間】！");
             }
         }
 
+        // GPS Real-time tracking
         function triggerGPS() {
             const gpsText = document.getElementById('gpsText');
             gpsText.innerText = 'GPS 定位中...';
 
             if ("geolocation" in navigator) {
                 const gpsTimeout = setTimeout(() => {
-                    gpsText.innerText = '100M 預設座標';
+                    gpsText.innerText = '預設座標';
                 }, 3000);
 
                 navigator.geolocation.getCurrentPosition(position => {
@@ -398,103 +519,123 @@
                     userLat = position.coords.latitude;
                     userLng = position.coords.longitude;
                     
-                    map.setView([userLat, userLng], 19);
+                    map.setView([userLat, userLng], 18);
                     updateUserMarkerAndCircle();
-                    gpsText.innerText = 'GPS 100M 鎖定';
+                    gpsText.innerText = 'GPS 已鎖定';
                     setTimeout(() => map.invalidateSize(), 100);
                 }, error => {
                     clearTimeout(gpsTimeout);
-                    gpsText.innerText = '100M 預設座標';
+                    gpsText.innerText = '預設座標';
                 }, { enableHighAccuracy: true, timeout: 3000 });
             }
         }
 
+        // 100m Radius Indicator & Gourmet Ranger Mascot Avatar
         function updateUserMarkerAndCircle() {
             if (userMarker) map.removeLayer(userMarker);
             if (userCircle) map.removeLayer(userCircle);
 
             userCircle = L.circle([userLat, userLng], {
-                color: '#f59e0b',
-                fillColor: '#fbbf24',
-                fillOpacity: 0.15,
+                color: '#f43f5e',
+                fillColor: '#fb7185',
+                fillOpacity: 0.18,
                 radius: 100,
-                weight: 2,
-                dashArray: '6, 6'
+                weight: 3.5,
+                dashArray: '8, 8'
             }).addTo(map);
 
             const heroIcon = L.divIcon({
                 className: 'custom-hero-icon',
                 html: `
-                    <div class="marker-pulse" style="background: linear-gradient(135deg, #f43f5e, #be123c); width: 32px; height: 32px; border: 3px solid #fef08a; box-shadow: 0 0 10px #f43f5e; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 14px; font-weight: bold;">
-                        🧝‍♂️
+                    <div class="hero-aura" style="background: linear-gradient(135deg, #f59e0b, #ef4444); width: 38px; height: 38px; border: 3.5px solid #000; box-shadow: 3px 3px 0px #000; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 18px; cursor: pointer;">
+                        🧙‍♂️
                     </div>
                 `,
-                iconSize: [32, 32],
-                iconAnchor: [16, 16]
+                iconSize: [38, 38],
+                iconAnchor: [19, 19]
             });
 
             userMarker = L.marker([userLat, userLng], { icon: heroIcon }).addTo(map)
-                .bindPopup('<b style="color:#f59e0b;">⚔️ 勇者冒險據點 (雷達中心)</b>');
+                .bindPopup('<b style="color:#e11d48; font-size:14px;">⚔️ 美食戰隊隊長據點 (100M 雷達範圍)</b>');
         }
 
-        function loadRealHKRestaurants() {
+        function getStatusIcon(status) {
+            switch(status) {
+                case 'uncategorized': return '❓';
+                case 'eaten': return '😋';
+                case 'wishlist': return '📌';
+                case 'favorite': return '💖';
+                default: return '📍';
+            }
+        }
+
+        function getStatusLabel(status) {
+            switch(status) {
+                case 'uncategorized': return '未分類';
+                case 'eaten': return '食過';
+                case 'wishlist': return '想去';
+                case 'favorite': return '最愛';
+                default: return '標記';
+            }
+        }
+
+        function renderAllMarkersAndInventory() {
             restaurantMarkers.forEach(m => map.removeLayer(m));
             restaurantMarkers = [];
-            allRestaurants = [...customRestaurants];
-
-            hkFamousRestaurants.forEach(item => {
-                if (!allRestaurants.some(r => r.name === item.name)) {
-                    allRestaurants.push({ ...item, favorited: false });
-                }
-            });
+            markerMap = {}; // 清空標籤對照表
 
             allRestaurants.forEach(item => {
-                const isCust = item.isCustom;
+                const iconSymbol = getStatusIcon(item.status);
+
                 const iconHtml = `
-                    <div class="marker-pulse" style="background: ${isCust ? 'linear-gradient(135deg, #10b981, #047857)' : 'linear-gradient(135deg, #fbbf24, #d97706)'}; border: 3px solid #2e1065; box-shadow: 3px 3px 0px #090514; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; font-size: 16px; cursor: pointer; border-radius: 6px;">
-                        ${isCust ? '💎' : '🍜'}
+                    <div style="background: linear-gradient(135deg, #fbbf24, #f59e0b); border: 3px solid #000; box-shadow: 3px 3px 0px #000; width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; font-size: 17px; cursor: pointer; border-radius: 10px;">
+                        ${iconSymbol}
                     </div>
                 `;
                 const customIcon = L.divIcon({
                     className: 'custom-food-marker',
                     html: iconHtml,
-                    iconSize: [32, 32],
-                    iconAnchor: [16, 16]
+                    iconSize: [34, 34],
+                    iconAnchor: [17, 17]
                 });
 
                 const marker = L.marker([item.lat, item.lon], { icon: customIcon }).addTo(map);
+                
+                // 轉義單引號以防 JS 語法崩潰
+                const safeName = item.name.replace(/'/g, "\\'");
+
                 marker.bindPopup(`
-                    <div style="font-family:'Noto Sans TC',sans-serif; min-width:190px;">
-                        <b style="font-size:15px; color:#fef08a;">${item.name} ${isCust ? '✏️' : ''}</b><br>
-                        <span style="font-size:12px; color:#cbd5e1;">🌟 評分: ${item.rating} | ${item.cuisine}</span><br>
-                        <span style="font-size:11px; color:#94a3b8;">📍 ${item.address}</span><br>
-                        <div style="margin-top:8px; display:flex; gap:4px;">
-                            <a href="https://www.google.com/maps/search/?api=1&query=${item.lat},${item.lon}" target="_blank" style="background: linear-gradient(to right, #e11d48, #be123c); color:white; padding:4px 8px; font-size:11px; text-decoration:none; font-weight:bold; border-radius:2px;">🚀 導航</a>
-                            <a href="https://www.openrice.com/zh/hongkong/restaurants?what=${encodeURIComponent(item.name.split(' ')[0])}" target="_blank" style="background: linear-gradient(to right, #ea580c, #c2410c); color:white; padding:4px 8px; font-size:11px; text-decoration:none; font-weight:bold; border-radius:2px;">📖 OpenRice</a>
+                    <div style="font-family:'Noto Sans TC',sans-serif; min-width:210px;">
+                        <span style="background:#f43f5e; color:white; font-size:10px; font-weight:bold; padding:2px 8px; border-radius:4px; border:1px solid #000;">${getStatusIcon(item.status)} ${getStatusLabel(item.status)}</span><br>
+                        <b style="font-size:15px; color:#000; display:inline-block; margin-top:4px;">${item.name}</b><br>
+                        <span style="font-size:12px; color:#475569;">🌟 戰鬥力: <b>${item.rating}</b></span><br>
+                        <span style="font-size:11px; color:#64748b;">📍 ${item.address}</span><br>
+                        <div style="margin-top:10px; display:flex; gap:6px;">
+                            <button onclick="startNavigation(${item.lat}, ${item.lon}, '${safeName}')" style="background: #10b981; color:white; padding:5px 10px; font-size:11px; font-weight:bold; border:2px solid #000; box-shadow:2px 2px 0 #000; border-radius:6px; cursor:pointer;">🚀 導航</button>
+                            <a href="https://www.openrice.com/zh/hongkong/restaurants?what=${encodeURIComponent(item.name.split(' ')[0])}" target="_blank" style="background: #f97316; color:white; padding:5px 10px; font-size:11px; text-decoration:none; font-weight:bold; border:2px solid #000; box-shadow:2px 2px 0 #000; border-radius:6px;">📖 OpenRice</a>
                         </div>
                     </div>
                 `);
 
                 restaurantMarkers.push(marker);
+                markerMap[item.id] = marker; // 記錄對照表
             });
 
             renderInventory();
         }
 
-        // 🚀 使用 LocationIQ 官方搜尋 API 進行視野掃描
+        // LocationIQ Search API integration ("雷達範圍掃瞄")
         async function searchRestaurantsInBounds() {
-            setDialogue("法師輕鬆咁施展美食雷達探測術....");
+            setDialogue("正在調動【雷達視角】發動範圍掃瞄，搜尋視野內的餐廳...");
             const bounds = map.getBounds();
             const south = bounds.getSouth();
             const west = bounds.getWest();
             const north = bounds.getNorth();
             const east = bounds.getEast();
 
-            // LocationIQ viewbox 格式: min_lon,max_lat,max_lon,min_lat (即 west,north,east,south)
             const viewbox = `${west},${north},${east},${south}`;
 
             try {
-                // 同時搜尋 restaurant 與 cafe
                 const urlRest = `https://us1.locationiq.com/v1/search.php?key=${LOCATIONIQ_TOKEN}&q=restaurant&format=json&viewbox=${viewbox}&bounded=1&addressdetails=1`;
                 const urlCafe = `https://us1.locationiq.com/v1/search.php?key=${LOCATIONIQ_TOKEN}&q=cafe&format=json&viewbox=${viewbox}&bounded=1&addressdetails=1`;
 
@@ -514,11 +655,11 @@
                 if (combined.length > 0) {
                     parseLocationIQRestaurants(combined);
                 } else {
-                    setDialogue("此視野未偵測到新餐館！");
+                    setDialogue("此區域暫未掃瞄到新餐廳！試著移動地圖再掃瞄一次！");
                 }
             } catch (e) {
                 console.error(e);
-                setDialogue("官方雷達連線逾時或發生錯誤！");
+                setDialogue("雷達掃瞄逾時！請稍後重試。");
             }
         }
 
@@ -529,132 +670,178 @@
                 const lon = parseFloat(el.lon);
                 if (!lat || !lon) return;
 
-                const name = el.display_name ? el.display_name.split(',')[0] : `視野餐館 #${index + 1}`;
+                const name = el.display_name ? el.display_name.split(',')[0] : `動漫餐館 #${index + 1}`;
                 if (allRestaurants.some(r => r.name === name)) return;
 
                 const address = (el.address && (el.address.road || el.address.neighbourhood))
                     ? `${el.address.neighbourhood || ''} ${el.address.road || ''}`.trim()
                     : (el.display_name || '香港街頭');
 
-                // 智慧分類對應四大分類
-                let type = 'small_shop';
-                const lowerName = name.toLowerCase();
-                if (lowerName.includes('cafe') || lowerName.includes('咖啡') || lowerName.includes('coffee')) {
-                    type = 'cafe';
-                } else if (lowerName.includes('甜品') || lowerName.includes('dessert') || lowerName.includes('糖水')) {
-                    type = 'dessert';
-                } else if (lowerName.includes('茶餐廳') || lowerName.includes('冰室') || lowerName.includes('cha chaan')) {
-                    type = 'cha_chaan_teng';
-                }
-
                 const restaurant = {
                     id: 'liq_' + (el.place_id || Math.random()),
                     name: name,
                     lat: lat,
                     lon: lon,
-                    type: type,
-                    cuisine: type === 'cafe' ? 'CAFE 咖啡廳' : (type === 'dessert' ? '甜品專門店' : (type === 'cha_chaan_teng' ? '港式茶記' : '地道小店')),
+                    status: 'uncategorized', // 預設歸類為「未分類」
                     address: address,
-                    rating: (4.1 + Math.random() * 0.8).toFixed(1),
-                    favorited: false
+                    rating: (4.2 + Math.random() * 0.7).toFixed(1)
                 };
 
                 allRestaurants.push(restaurant);
                 addedCount++;
-
-                const iconHtml = `
-                    <div class="marker-pulse" style="background: linear-gradient(135deg, #a855f7, #7e22ce); border: 3px solid #fef08a; box-shadow: 3px 3px 0px #090514; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; font-size: 16px; cursor: pointer; border-radius: 6px;">
-                        🍜
-                    </div>
-                `;
-                const customIcon = L.divIcon({ className: 'custom-food-marker', html: iconHtml, iconSize: [32, 32], iconAnchor: [16, 16] });
-                const marker = L.marker([lat, lon], { icon: customIcon }).addTo(map);
-                marker.bindPopup(`
-                    <div style="font-family:'Noto Sans TC',sans-serif; min-width:190px;">
-                        <b style="font-size:15px; color:#fef08a;">${name}</b><br>
-                        <span style="font-size:12px; color:#cbd5e1;">🌟 評分: ${restaurant.rating} | ${restaurant.cuisine}</span><br>
-                        <span style="font-size:11px; color:#94a3b8;">📍 ${address}</span><br>
-                        <div style="margin-top:8px; display:flex; gap:4px;">
-                            <a href="https://www.google.com/maps/search/?api=1&query=${lat},${lon}" target="_blank" style="background: linear-gradient(to right, #e11d48, #be123c); color:white; padding:4px 8px; font-size:11px; text-decoration:none; font-weight:bold; border-radius:2px;">🚀 導航</a>
-                            <a href="https://www.openrice.com/zh/hongkong/restaurants?what=${encodeURIComponent(name.split(' ')[0])}" target="_blank" style="background: linear-gradient(to right, #ea580c, #c2410c); color:white; padding:4px 8px; font-size:11px; text-decoration:none; font-weight:bold; border-radius:2px;">📖 OpenRice</a>
-                        </div>
-                    </div>
-                `);
-                restaurantMarkers.push(marker);
             });
 
-            renderInventory();
-            setDialogue(`雷達掃描完畢！成功捕獲 ${addedCount} 間新餐館！`);
+            persistRestaurants();
+            renderAllMarkersAndInventory();
+            setDialogue(`雷達掃瞄成功！一共捕捉了 ${addedCount} 間餐廳，已自動加入【❓ 未分類】！`);
         }
 
         function renderInventory() {
             const listEl = document.getElementById('restaurantList');
             const filtered = allRestaurants.filter(r => {
                 if (currentFilter === 'all') return true;
-                if (currentFilter === 'favorite') return r.favorited;
-                return r.type === currentFilter;
+                return r.status === currentFilter;
             });
 
             document.getElementById('inventoryCount').innerText = `${filtered.length} 筆`;
 
             if (filtered.length === 0) {
-                listEl.innerHTML = `<div class="text-center py-10 text-purple-300 font-sans text-xs">沒有符合此分類的美食項目</div>`;
+                listEl.innerHTML = `<div class="text-center py-12 text-slate-500 font-sans text-xs font-bold">目前沒有符合「${getStatusLabel(currentFilter)}」的據點</div>`;
                 return;
             }
 
-            listEl.innerHTML = filtered.map(r => `
-                <div class="pixel-box-32 bg-slate-900/90 p-3 hover:border-amber-400 transition-all border border-purple-800 relative">
+            listEl.innerHTML = filtered.map(r => {
+                const safeName = r.name.replace(/'/g, "\\'");
+                return `
+                <div class="anime-panel bg-white p-3 hover:border-rose-500 transition-all border-2 border-black relative">
                     <div class="flex items-start justify-between">
-                        <div class="flex items-center space-x-2">
-                            <span class="text-2xl">${r.isCustom ? '💎' : '🍲'}</span>
+                        <div class="flex items-center space-x-2.5">
+                            <span class="text-2xl">${getStatusIcon(r.status)}</span>
                             <div>
-                                <h3 class="font-bold text-sm text-amber-300 flex items-center gap-1">
+                                <h3 class="font-bold text-sm text-slate-900 font-anime">
                                     ${r.name}
-                                    ${r.isCustom ? '<span class="text-[9px] bg-emerald-600 text-white px-1 py-0.5 font-pixel">自訂</span>' : ''}
                                 </h3>
-                                <p class="text-[11px] text-purple-200">🌟 ${r.rating} | ${r.address}</p>
+                                <p class="text-[11px] text-slate-600 font-sans font-medium">🌟 戰鬥力 ${r.rating} | ${r.address}</p>
                             </div>
                         </div>
-                        <div class="flex items-center space-x-1">
-                            ${r.isCustom ? `<button onclick="deleteCustomRestaurant('${r.id}')" class="text-xs bg-rose-900 text-rose-200 px-1.5 py-0.5 hover:bg-rose-700">🗑️</button>` : ''}
-                            <button onclick="toggleFavorite('${r.id}')" class="text-lg focus:outline-none">
-                                ${r.favorited ? '❤️' : '🤍'}
-                            </button>
-                        </div>
+                        <button onclick="deleteRestaurant('${r.id}')" class="text-xs bg-rose-100 text-rose-700 px-1.5 py-0.5 border border-black hover:bg-rose-200 rounded">🗑️</button>
                     </div>
-                    <div class="mt-2 pt-2 border-t border-purple-900/60 flex items-center justify-between text-xs">
-                        <span class="text-[10px] bg-purple-950 text-amber-400 px-2 py-0.5 border border-purple-700 font-pixel">${r.cuisine || r.type}</span>
-                        <div class="space-x-1">
-                            <button onclick="panToRestaurant(${r.lat}, ${r.lon})" class="pixel-btn-32 bg-amber-500 text-slate-950 font-bold px-2.5 py-1 font-pixel text-[10px]">👁️ 檢視</button>
-                            <a href="https://www.openrice.com/zh/hongkong/restaurants?what=${encodeURIComponent(r.name.split(' ')[0])}" target="_blank" class="pixel-btn-32 bg-orange-600 text-white px-2.5 py-1 font-pixel text-[10px] inline-block">📖 OpenRice</a>
-                            <a href="https://www.google.com/maps/search/?api=1&query=${r.lat},${r.lon}" target="_blank" class="pixel-btn-32 bg-emerald-600 text-white px-2.5 py-1 font-pixel text-[10px] inline-block">🚀 導航</a>
+                    
+                    <div class="mt-2.5 pt-2 border-t border-slate-200 flex flex-wrap items-center justify-between gap-1 text-xs">
+                        <!-- 隨時切換分類按鈕 (未分類 / 食過 / 想去 / 最愛) -->
+                        <div class="flex flex-wrap gap-1 font-sans text-[10px]">
+                            <button onclick="updateRestaurantStatus('${r.id}', 'uncategorized')" class="px-2 py-0.5 border border-black rounded ${r.status === 'uncategorized' ? 'bg-purple-600 text-white font-bold' : 'bg-slate-100 text-slate-700'}">❓ 未分類</button>
+                            <button onclick="updateRestaurantStatus('${r.id}', 'eaten')" class="px-2 py-0.5 border border-black rounded ${r.status === 'eaten' ? 'bg-rose-500 text-white font-bold' : 'bg-slate-100 text-slate-700'}">😋 食過</button>
+                            <button onclick="updateRestaurantStatus('${r.id}', 'wishlist')" class="px-2 py-0.5 border border-black rounded ${r.status === 'wishlist' ? 'bg-amber-400 text-black font-bold' : 'bg-slate-100 text-slate-700'}">📌 想去</button>
+                            <button onclick="updateRestaurantStatus('${r.id}', 'favorite')" class="px-2 py-0.5 border border-black rounded ${r.status === 'favorite' ? 'bg-pink-500 text-white font-bold' : 'bg-slate-100 text-slate-700'}">💖 最愛</button>
+                        </div>
+
+                        <div class="space-x-1 mt-1 sm:mt-0">
+                            <button onclick="panToRestaurant('${r.id}', ${r.lat}, ${r.lon})" class="anime-btn bg-amber-300 text-black px-2 py-0.5 text-[10px] font-black">👁️ 檢視</button>
+                            <a href="https://www.openrice.com/zh/hongkong/restaurants?what=${encodeURIComponent(r.name.split(' ')[0])}" target="_blank" class="anime-btn bg-orange-400 text-white px-2 py-0.5 text-[10px] font-black inline-block">📖 OpenRice</a>
+                            <button onclick="startNavigation(${r.lat}, ${r.lon}, '${safeName}')" class="anime-btn bg-emerald-500 text-white px-2 py-0.5 text-[10px] font-black inline-block">🚀 導航</button>
                         </div>
                     </div>
                 </div>
-            `).join('');
+            `}).join('');
         }
 
         function filterCategory(cat) {
             currentFilter = cat;
             document.querySelectorAll('.cat-btn').forEach(btn => {
-                btn.classList.remove('bg-amber-400', 'text-slate-950', 'font-bold');
-                btn.classList.add('bg-purple-900', 'text-purple-200');
+                btn.classList.remove('bg-amber-300', 'text-black', 'font-black');
+                btn.classList.add('bg-slate-100', 'text-slate-800');
             });
-            event.target.classList.remove('bg-purple-900', 'text-purple-200');
-            event.target.classList.add('bg-amber-400', 'text-slate-950', 'font-bold');
+            event.target.classList.remove('bg-slate-100', 'text-slate-800');
+            event.target.classList.add('bg-amber-300', 'text-black', 'font-black');
             renderInventory();
         }
 
-        function toggleFavorite(id) {
-            const item = allRestaurants.find(r => r.id === id || r.id == id);
-            if (item) {
-                item.favorited = !item.favorited;
-                renderInventory();
+        // 按下「檢視」時平移地圖，並自動打開餐廳 Popup 視窗
+        function panToRestaurant(id, lat, lon) {
+            map.setView([lat, lon], 19);
+            if (markerMap[id]) {
+                markerMap[id].openPopup();
             }
         }
 
-        function panToRestaurant(lat, lon) {
-            map.setView([lat, lon], 19);
+        // 🚶‍♂️ 即時 OSRM 步行導航（不跳轉外部網頁）
+        function startNavigation(destLat, destLng, targetName) {
+            if (routingControl) {
+                map.removeControl(routingControl);
+                routingControl = null;
+            }
+
+            setDialogue(`正在生成前往「${targetName}」的步行戰隊出擊路線...`);
+
+            routingControl = L.Routing.control({
+                waypoints: [
+                    L.latLng(userLat, userLng),
+                    L.latLng(destLat, destLng)
+                ],
+                // 確保使用步行專用 (foot) OSRM API 服務路徑
+                router: L.Routing.osrmv1({
+                    serviceUrl: 'https://router.project-osrm.org/route/v1',
+                    profile: 'foot' // 嚴格指定步行 Profile
+                }),
+                lineOptions: {
+                    styles: [
+                        { color: '#000000', opacity: 0.9, weight: 8 },
+                        { color: '#f43f5e', opacity: 0.9, weight: 5 }
+                    ]
+                },
+                addWaypoints: false,
+                draggableWaypoints: false,
+                fitSelectedRoutes: true,
+                show: false,
+                createMarker: function() { return null; } // 隱藏多餘預設標記
+            }).addTo(map);
+
+            // 監聽計算完成事件
+            routingControl.on('routesfound', function(e) {
+                const routes = e.routes;
+                const summary = routes[0].summary;
+
+                const distanceMeters = Math.round(summary.totalDistance);
+                const distanceStr = distanceMeters >= 1000 ? (distanceMeters / 1000).toFixed(1) + ' 公里' : distanceMeters + ' 公尺';
+                const timeMinutes = Math.max(1, Math.round(summary.totalTime / 60));
+
+                document.getElementById('navTargetName').innerText = targetName;
+                document.getElementById('navDistance').innerText = distanceStr;
+                document.getElementById('navTime').innerText = timeMinutes + ' 分鐘';
+
+                // 指引細節
+                const instructionsContainer = document.getElementById('navInstructions');
+                instructionsContainer.innerHTML = '';
+                if (routes[0].instructions && routes[0].instructions.length > 0) {
+                    routes[0].instructions.forEach((step, idx) => {
+                        const stepEl = document.createElement('div');
+                        stepEl.className = 'flex justify-between items-center py-1 border-b border-slate-200';
+                        stepEl.innerHTML = `<span>${idx + 1}. ${step.text}</span> <span class="font-bold text-slate-500">${Math.round(step.distance)}m</span>`;
+                        instructionsContainer.appendChild(stepEl);
+                    });
+                } else {
+                    instructionsContainer.innerHTML = '<p class="text-slate-500">直行即可抵達目的地</p>';
+                }
+
+                document.getElementById('navPanel').classList.remove('hidden');
+                setDialogue(`路線鎖定！距離 ${distanceStr}，預 ${timeMinutes} 分鐘！`);
+            });
+
+            routingControl.on('routingerror', function(err) {
+                console.error("導航計算失敗：", err);
+                setDialogue("無法取得路徑，請確認網路連線或座標位置！");
+            });
+        }
+
+        // 結束導航並清除圖層
+        function stopNavigation() {
+            if (routingControl) {
+                map.removeControl(routingControl);
+                routingControl = null;
+            }
+            document.getElementById('navPanel').classList.add('hidden');
+            setDialogue("已結束導航，恢復視野巡邏。");
         }
 
         function setDialogue(text) {
